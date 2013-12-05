@@ -1,0 +1,11 @@
+*.[oa]
+*.lst
+*.pnps
+*.elf
+*.map
+*.sym
+*.lss
+*.lst
+*.eep
+*.sublime-project
+*.sublime-workspace
