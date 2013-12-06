@@ -33,12 +33,12 @@
  *
  *
  * 5) see the example main.c, add KERNELTICK(); macro to your while(1) or for(;;) main loop.
- *
+ * TODO: semaphores (see utask)
  *
  *sadiff*/
-#include "PfemtoTasker.h"
+#include "kernel.h"
 #define TRUE 1
-#define TICK 200 //tick time value in micro seconds
+#define TICK 1000 //tick time value in micro seconds
 #define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1
 //TODO: task that accepts parameters
 
@@ -70,7 +70,7 @@ void _fw_timer1_ctc_setup (int compValue)
     /*Enable global interrupts*/
     sei();
 
-    /*CTC compare value to compValue.*/
+    /*CTC compare value to compValue*/
     OCR1A = compValue;
 }
 
@@ -80,7 +80,7 @@ ISR (TIMER1_COMPA_vect)
    computeTimersFlag = 1;
    sei();
 }
-/* ***************************************************************** */
+/* **************End of firmware layer****************************** */
 /* ***************************************************************** */
 
 
@@ -134,21 +134,10 @@ void doEvents ( void )
 		{
 			if	( taskList[i].expired == 1)
 			{
-				//If the task is a single shot timer, deactivate it and clear the reference to the callback function.
-                //if (taskList[i].singleShot == TRUE)
-                {
-                    taskList[i].fPtr (); //Call the task function
-                    taskList[i].active 	= taskList[i].singleShot;
-                    taskList[i].expired = 0;
-                    //taskList[i].fPtr = 0;
-                }
-                //Else, just clear the expired flag and reload the time.
-                //else
-                //{
-                 //   taskList[i].fPtr (); //Call the task function.
-                 //   taskList[i].expired = 0;
-                 //  taskList[i].ticks = taskList[i]._reload_ticks; //Reload the timer.
-                //}
+		        taskList[i].fPtr (); /**Call the task function*/
+                taskList[i].active 	= taskList[i].singleShot; /**if task is a singleshot, we set status to inactive*/
+                taskList[i].expired = 0;
+                //taskList[i].fPtr = 0;
 			}
 		}
 	}
@@ -175,5 +164,5 @@ void computeTimers ( void )
 		}
     }
 }
-/* ***************************************************************** */
+/* **************End of primitives layer**************************** */
 /* ***************************************************************** */

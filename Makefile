@@ -81,7 +81,7 @@ OBJDIR = .
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC =   $(TARGET).c \
-        femtotasker.c
+        kernel.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)

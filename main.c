@@ -16,13 +16,13 @@
 #include "kernel.h"
 
 
-extern volatile struct _st_tasker taskList[MAX_TASKS]; //TODO: fix this!
+//extern volatile struct _st_tasker taskList[MAX_TASKS]; //TODO: remove this line
 volatile int computeTimersFlag = 0;
 
 
 int main( void )
 {
-    SET_OUT (LED_0);
+    //SET_OUT (LED_0);
     /*PB4 pullup on*/
     //SET_PIN(PORTD,0);
     taskerSetUp();
@@ -31,6 +31,7 @@ int main( void )
 
     while(1)
     {
+
         KERNELTICK();
     }
 }
