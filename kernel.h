@@ -11,7 +11,6 @@
 
 
 
-
 //MACROS
 #define MAX_TASKS 10
 #define SINGLE_SHOT 0    //If we define single_shot as 0 here, we can save an If statement later in doEvents.
@@ -25,7 +24,8 @@
 #define TICKS(tks) (((long)tks)*TICK)/1000L
 #define MS(msec) ( (msec)*1000/(TICK) )  //Returns number of ticks equivalent to "msec" miliseconds
 
-#define KERNELTICK() if (computeTimersFlag){ computeTimers(); doEvents();}
+//Remove this line in next commit
+//#define KERNELTICK() if (computeTimersFlag){ computeTimers(); doEvents();}
 
 //STRUCTS
     struct _st_tasker
@@ -44,11 +44,14 @@
     void _fw_timer1_stop ( void );
     void _fw_timer1_ctc_setup ( int compValue );
     //Primitives
-    void taskerSetUp( void );
-    void doEvents ( void );
-    void _addTask ( int taskN, long ms, int singleShot, void (*funcPtr)(void)) ;
-    void computeTimers(void);
-    void _taskDeactivate (int task_n);
-    void _taskActivate (int task_n);
+        /**External*/
+        void taskerSetUp( void );
+        /**Internal*/
+        void _doEvents ( void );
+        void _addTask ( int taskN, long ms, int singleShot, void (*funcPtr)(void)) ;
+        //@TODO: remove this line in next commit
+        // void computeTimers(void;)
+        void _taskDeactivate (int task_n);
+        void _taskActivate (int task_n);
 #define NAAS_H
 #endif

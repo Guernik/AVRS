@@ -43,7 +43,7 @@
 //TODO: task that accepts parameters
 
 volatile struct _st_tasker taskList[MAX_TASKS];
-extern volatile int computeTimersFlag;
+volatile int computeTimersFlag = 0;
 
 /*************************************************/
 /**                  Firmware Layer              */
@@ -125,7 +125,7 @@ void _taskActivate (int task_n)
  * If it was not a single shot task, refill the counter with the initial timer value and
  * set it to active state again. If it was a single shot task, set it to inactive state.
  **/
-void doEvents ( void )
+void _doEvents ( void )
 {
 	int i = 0;
     for (i = 0; i <= MAX_TASKS; i++)
@@ -148,20 +148,25 @@ void doEvents ( void )
  * Iterate the task list, reduce the timer by 1 tick
  * and set the flag to "expired" if necessary.
  **/
-void computeTimers ( void )
+// void computeTimers ( void )
+void kerneltick( void )
 {
-	int i = 0;
-	computeTimersFlag = 0;
-    for ( i = 0; i <= MAX_TASKS; i++)
-	{
-		if ( taskList[i].active == 1 )
-		{
-			taskList[i].ticks--;
-            if ( taskList[i].ticks == 0 )
+    if (computeTimersFlag)
+    {
+        int i = 0;
+        computeTimersFlag = 0;
+        for ( i = 0; i <= MAX_TASKS; i++)
+        {
+            if ( taskList[i].active == 1 )
             {
-                taskList[i].expired = 1;
+                taskList[i].ticks--;
+                if ( taskList[i].ticks == 0 )
+                {
+                    taskList[i].expired = 1;
+                }
             }
-		}
+        }
+        _doEvents(); /**Iterate task list and call due tasks*/
     }
 }
 /* **************End of primitives layer**************************** */

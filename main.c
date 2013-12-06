@@ -17,7 +17,7 @@
 
 
 //extern volatile struct _st_tasker taskList[MAX_TASKS]; //TODO: remove this line
-volatile int computeTimersFlag = 0;
+//volatile int computeTimersFlag = 0; //and this line
 
 
 int main( void )
@@ -26,13 +26,13 @@ int main( void )
     /*PB4 pullup on*/
     //SET_PIN(PORTD,0);
     taskerSetUp();
-    ADDTASK(TASK_SOFT_PWM,15000,NO_SINGLE_SHOT);
+    //ADDTASK(TASK_SOFT_PWM,15000,NO_SINGLE_SHOT);
 
 
     while(1)
     {
 
-        KERNELTICK();
+        kerneltick();
     }
 }
 
