@@ -42,8 +42,10 @@
 #define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1
 //TODO: task that accepts parameters
 
-volatile struct _st_tasker taskList[MAX_TASKS];
-volatile int computeTimersFlag = 0;
+
+volatile task taskList[MAX_TASKS];
+volatile uint8_t computeTimersFlag = 0;
+static uint8_t free_task_id = 0; //Module global variable (just this file).
 
 /*************************************************/
 /**                  Firmware Layer              */
@@ -96,26 +98,55 @@ void taskerSetUp( void )
 
 
 
+/**
+@brief Add new task to task list
+Add a new task to list, make it active, load default interval, and return a pointer to the task.
+@param  funcPtr     pointer to function that takes a task* as parameter and returns nothing
+*/
+task* _addTask( void (*funcPtr)(task* this) )
+{
+	task* new_task = &taskList[free_task_id];
 
-void _addTask( int task_n, long ms, int singleShot, void (*funcPtr)(void) )
-{
-	_fw_timer1_stop();
-	taskList[task_n].active = 1;
-    taskList[task_n]._reload_ticks = ms;
-	taskList[task_n].ticks = ms;
-    taskList[task_n].singleShot = singleShot;
-	taskList[task_n].fPtr = funcPtr;
-	_fw_timer1_start();
+    if (free_task_id == MAX_TASKS)
+    {
+        return NULL; //No empty task available, return NULL;
+    }
+    else
+    {
+        taskList[free_task_id]->stauts = TASK_ACTIVE;
+        taskList[free_task_id]->_reload_ticks = TASK_DEFAULT_INTERVAL;
+        taskList[free_task_id]->ticks = TASK_DEFAULT_INTERVAL;
+        taskList[free_task_id]->singleShot = NO_SINGLE_SHOT;
+        taskList[free_task_id]->fPtr = funcPtr;
+        free_task_id++;
+        return new_task;/*pointer to current task*/;
+    }
 }
-//
-void _taskDeactivate (int task_n)
+
+void _taskDeactivate ( void (*ptr)(task* this) )
 {
-    taskList[task_n].active = 0;
+    int i;
+    for (i=0;i<MAX_TASKS;i++)
+    {
+        if (taskList[i].funcPtr == ptr)
+        {
+            taskList[i].stauts=TASK_STOP;
+            break;
+        }
+    }
 }
-//
-void _taskActivate (int task_n)
+
+void _taskActivate ( void (*ptr)(task* this) )
 {
-    taskList[task_n].active = 1;
+    int i;
+    for (i=0;i<MAX_TASKS;i++)
+    {
+        if (taskList[i].funcPtr == ptr)
+        {
+            taskList[i].stauts=TASK_ACTIVE;
+            break;
+        }
+    }
 }
 
 

@@ -28,11 +28,30 @@ int main( void )
     taskerSetUp();
     //ADDTASK(TASK_SOFT_PWM,15000,NO_SINGLE_SHOT);
 
+    add_task(task1);
+
 
     while(1)
     {
-
-        kerneltick();
+        kerneltick(); //TODO: taskdispatch();
     }
 }
 
+
+//Example of intended usage
+void task1 (task* this)
+{
+    switch (t->state_machine.state)
+    {
+        case A:
+            led = 1;
+            task_sleep(this,MS(40)); //task will sleep for 40 msec, and then 'state' will automatically increment by 1,
+            break;
+        case B:
+            led = 0;
+            this->state_machine.next_state = A; //We need to tell the dispatcher that next state is state A, instead of B+1
+            task_sleep(this,MS(40));
+            break;
+    }
+
+}
