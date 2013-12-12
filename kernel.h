@@ -17,31 +17,23 @@
 #define NO_SINGLE_SHOT 1
 
 #define MS(msec) ( (msec)*1000/(TICK) )  //Returns number of ticks equivalent to "msec" miliseconds
-#define ADD_TASK(task_n,singleshot) ADD_TASK_INTERVAL(task_n,TASK_DEFAULT_INTERVAL,singleshot)
-#define ADD_TASK_INTERVAL(task_n,time,singleshot) _addTask(task_n,time,singleshot,task_##task_n )
-#define TASK(task_n) void task_##task_n( void )
-#define TASK_STOP(task_n) _taskDeactivate(task_n)
-#define TASK_START(task_n) _taskActivate(task_n)
 #define TICKS(tks) (((long)tks)*TICK)/1000L
+// #define ADD_TASK(task_n,singleshot) ADD_TASK_INTERVAL(task_n,TASK_DEFAULT_INTERVAL,singleshot)
+// #define ADD_TASK_INTERVAL(task_n,time,singleshot) _addTask(task_n,time,singleshot,task_##task_n )
+// #define TASK(task_n) void task_##task_n( void )
+// #define TASK_STOP(task_n) _taskDeactivate(task_n)
+// #define TASK_START(task_n) _taskActivate(task_n)
 /**Task Status**/
 #define TASK_ACTIVE 0
 #define TASK_ASLEEP 1
 #define TASK_STOP 2
+#define TASK_EXPIRED 3
 
 
 //Remove this line in next commit
 //#define KERNELTICK() if (computeTimersFlag){ computeTimers(); doEvents();}
 
 //STRUCTS
-    struct _st_tasker
-    {
-        int active;
-        int expired;
-        long _reload_ticks;
-        long ticks;
-        int singleShot;
-        void (*fPtr) (void);
-    };
 
     struct fsm
     {
@@ -51,11 +43,11 @@
     };
     typedef struct _task
     {
-        int stauts;
+        int status;
         long _reload_ticks;
         long ticks;
         int singleshot;
-        void (*fPtr) (struct _task* this);
+        void (*func_ptr) (struct _task* this);
         struct fsm state_machine;
     }task;
 
@@ -67,12 +59,11 @@
     //Primitives
         /**External*/
         void taskerSetUp( void );
+        void kernelTick( void );
         /**Internal*/
         void _doEvents ( void );
-        void _addTask ( int taskN, long ms, int singleShot, void (*funcPtr)(void)) ;
-        //@TODO: remove this line in next commit
-        // void computeTimers(void;)
-        void _taskDeactivate (int task_n);
-        void _taskActivate (int task_n);
+        task* _addTask ( void (*func_ptr)(task* this)) ;
+        void _taskDeactivate (void (*func_ptr)(task* this));
+        void _taskActivate (void (*func_ptr)(task* this));
 #define NAAS_H
 #endif
