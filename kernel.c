@@ -42,8 +42,10 @@
 #define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1
 //TODO: task that accepts parameters
 
-volatile struct _st_tasker taskList[MAX_TASKS];
-volatile int computeTimersFlag = 0;
+
+task taskList[MAX_TASKS];
+volatile uint8_t computeTimersFlag = 0;
+static uint8_t free_task_id = 0; //Module global variable (just this file).
 
 /*************************************************/
 /**                  Firmware Layer              */
@@ -96,26 +98,55 @@ void taskerSetUp( void )
 
 
 
+/**
+@brief Add new task to task list
+Add a new task to list, make it active, load default interval, and return a pointer to the task.
+@param  funcPtr     pointer to function that takes a task* as parameter and returns nothing
+*/
+task* _addTask( void (*func_ptr)(task* this) )
+{
+	task* new_task = &taskList[free_task_id];
+    if (free_task_id == MAX_TASKS)
+    {
+        return 0; //No empty task available, return NULL;
+    }
+    else
+    {
+        new_task->status = TASK_ACTIVE;
+        new_task->_reload_ticks = TASK_DEFAULT_INTERVAL;
+        new_task->ticks = TASK_DEFAULT_INTERVAL;
+        new_task->singleshot = NO_SINGLE_SHOT;
+        new_task->func_ptr = func_ptr;
+        free_task_id++;
+        return new_task;/*pointer to current task*/;
+        //TODO: fix this
+    }
+}
 
-void _addTask( int task_n, long ms, int singleShot, void (*funcPtr)(void) )
+void _taskDeactivate ( void (*ptr)(task* this) )
 {
-	_fw_timer1_stop();
-	taskList[task_n].active = 1;
-    taskList[task_n]._reload_ticks = ms;
-	taskList[task_n].ticks = ms;
-    taskList[task_n].singleShot = singleShot;
-	taskList[task_n].fPtr = funcPtr;
-	_fw_timer1_start();
+    int i;
+    for (i=0;i<MAX_TASKS;i++)
+    {
+        if (taskList[i].func_ptr == ptr)
+        {
+            taskList[i].status=TASK_STOP;
+            break;
+        }
+    }
 }
-//
-void _taskDeactivate (int task_n)
+
+void _taskActivate ( void (*func_ptr)(task* this) )
 {
-    taskList[task_n].active = 0;
-}
-//
-void _taskActivate (int task_n)
-{
-    taskList[task_n].active = 1;
+    int i;
+    for (i=0;i<MAX_TASKS;i++)
+    {
+        if (taskList[i].func_ptr == func_ptr)
+        {
+            taskList[i].status=TASK_ACTIVE;
+            break;
+        }
+    }
 }
 
 
@@ -127,22 +158,20 @@ void _taskActivate (int task_n)
  **/
 void _doEvents ( void )
 {
-	int i = 0;
+	int i;
     for (i = 0; i <= MAX_TASKS; i++)
 	{
-		if ( taskList[i].active == 1)
+		if ( taskList[i].status== TASK_EXPIRED)
 		{
-			if	( taskList[i].expired == 1)
-			{
-		        taskList[i].fPtr (); /**Call the task function*/
-                taskList[i].active 	= taskList[i].singleShot; /**if task is a singleshot, we set status to inactive*/
-                taskList[i].expired = 0;
-                //taskList[i].fPtr = 0;
-			}
+	        taskList[i].func_ptr (&taskList[i]); /**Call the task function*/
+            taskList[i].ticks = taskList[i]._reload_ticks;
+            taskList[i].status = TASK_ACTIVE;
+            //TODO: im droping 'singleShot' functionality  as its not really needed.
+            //(it can be accomplished with a simple task and a taskStop call). Will do it in
+            //a new feature branch from dev branch.
 		}
 	}
-}//doEvents? Hmm that sounds familiar
-
+}
 
 /**
  * Iterate the task list, reduce the timer by 1 tick
@@ -157,12 +186,12 @@ void kerneltick( void )
         computeTimersFlag = 0;
         for ( i = 0; i <= MAX_TASKS; i++)
         {
-            if ( taskList[i].active == 1 )
+            if ( taskList[i].status == TASK_ACTIVE )
             {
                 taskList[i].ticks--;
                 if ( taskList[i].ticks == 0 )
                 {
-                    taskList[i].expired = 1;
+                    taskList[i].status = TASK_EXPIRED;
                 }
             }
         }
