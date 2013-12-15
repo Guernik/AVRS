@@ -37,15 +37,14 @@
  *
  *sadiff*/
 #include "kernel.h"
-#define TRUE 1
-#define TICK 1000 //tick time value in micro seconds
-#define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1
-//TODO: task that accepts parameters
+#define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1 //read datasheet for details of this line.
 
 
 task taskList[MAX_TASKS];
 volatile uint8_t computeTimersFlag = 0;
 static uint8_t free_task_id = 0; //Module global variable (just this file).
+
+
 
 /*************************************************/
 /**                  Firmware Layer              */
@@ -61,7 +60,7 @@ void _fw_timer1_stop( void )
     TCCR1B &= ~(1 << CS10);
 }
 
-void _fw_timer1_ctc_setup (int compValue)
+void _fw_timer1_ctc_setup (uint16_t compValue)
 {
     /*Timer1 CTC mode*/
     TCCR1B |= (1 << WGM12);
@@ -103,7 +102,7 @@ void taskerSetUp( void )
 Add a new task to list, make it active, load default interval, and return a pointer to the task.
 @param  funcPtr     pointer to function that takes a task* as parameter and returns nothing
 */
-task* _addTask( void (*func_ptr)(task* this) )
+task* add_task( void (*func_ptr)(task* this) )
 {
 	task* new_task = &taskList[free_task_id];
     if (free_task_id == MAX_TASKS)
@@ -121,6 +120,12 @@ task* _addTask( void (*func_ptr)(task* this) )
         return new_task;/*pointer to current task*/;
         //TODO: fix this
     }
+}
+void task_sleep( task* this, uint16_t ticks)
+{
+    this->status=TASK_ASLEEP;
+    this->sleep_ticks = ticks;
+
 }
 
 void _taskDeactivate ( void (*ptr)(task* this) )
@@ -178,7 +183,7 @@ void _doEvents ( void )
  * and set the flag to "expired" if necessary.
  **/
 // void computeTimers ( void )
-void kerneltick( void )
+void kernelTick( void )
 {
     if (computeTimersFlag)
     {
@@ -192,6 +197,18 @@ void kerneltick( void )
                 if ( taskList[i].ticks == 0 )
                 {
                     taskList[i].status = TASK_EXPIRED;
+                    #ifdef FSM_AUTOINCREMENT
+                        taskList[i].state_machine.state++; //Automagically increment state by 1.
+                    #endif
+                }
+            }
+            if ( taskList[i].status == TASK_ASLEEP )
+            {
+                taskList[i].sleep_ticks--;
+                if (taskList[i].sleep_ticks == 0)
+                {
+                    taskList[i].status = TASK_ACTIVE;
+                    taskList[i].state_machine.state++; //Automagically increment state by 1.
                 }
             }
         }

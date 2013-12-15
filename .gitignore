@@ -9,3 +9,5 @@
 *.eep
 *.sublime-project
 *.sublime-workspace
+*.hex
+*.d
