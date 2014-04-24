@@ -7,5 +7,6 @@
 *.lss
 *.lst
 *.eep
+*.o.*
 *.sublime-project
 *.sublime-workspace

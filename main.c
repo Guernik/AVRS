@@ -14,19 +14,31 @@
 
 #include "main.h"
 #include "kernel.h"
-
+#define LED_0 D,(PD2)
 
 extern volatile struct _st_tasker taskList[MAX_TASKS]; //TODO: fix this!
 volatile int computeTimersFlag = 0;
 
+TASK(1)
+{
 
+
+    if GET_PIN(LED_0)
+    {
+        CLR_PIN(LED_0);
+    }
+    else
+    {
+        SET_PIN(LED_0);
+    }
+}
 int main( void )
 {
     SET_OUT (LED_0);
     /*PB4 pullup on*/
     //SET_PIN(PORTD,0);
     taskerSetUp();
-    ADDTASK(TASK_SOFT_PWM,15000,NO_SINGLE_SHOT);
+    ADDTASK(1,10000,NO_SINGLE_SHOT);
 
 
     while(1)

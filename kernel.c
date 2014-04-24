@@ -36,7 +36,7 @@
  *
  *
  *sadiff*/
-#include "PfemtoTasker.h"
+#include "kernel.h"
 #define TRUE 1
 #define TICK 200 //tick time value in micro seconds
 #define CTC_VAL (F_CPU/(1/(TICK*(0.000001))))-1
